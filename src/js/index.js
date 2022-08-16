@@ -31,6 +31,7 @@ function App() {
       );
       const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
       $(".menu-count").innerText = `총 ${menuCount}개`;
+      $("#espresso-menu-name").value = "";
     }
   });
 }
