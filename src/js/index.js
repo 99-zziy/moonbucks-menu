@@ -45,6 +45,21 @@ function App() {
     if (e.key !== "Enter") return;
     addEspressoMenu();
   });
+
+  $("#espresso-menu-list").addEventListener("click", (e) => {
+    if (e.target.classList.contains("menu-edit-button")) {
+      const defaultMenuName = e.target
+        .closest("li")
+        .querySelector(".menu-name").innerText;
+      const editedMenuName = prompt("메뉴명을 수정하세요.", defaultMenuName);
+      e.target.closest("li").querySelector(".menu-name").innerText =
+        editedMenuName;
+    }
+
+    if (e.target.classList.contains("menu-remove-button")) {
+      console.log("삭제");
+    }
+  });
 }
 
 App();
