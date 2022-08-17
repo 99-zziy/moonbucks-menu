@@ -1,11 +1,5 @@
-const store = {
-  setLocalStorage(menu) {
-    localStorage.setItem("menu", JSON.stringify(menu));
-  },
-  getLocalStorage() {
-    return JSON.parse(localStorage.getItem("menu"));
-  },
-};
+import { $ } from "./utils/dom.js";
+import store from "./store/index.js";
 
 function App() {
   this.menu = {
@@ -21,12 +15,11 @@ function App() {
   this.init = () => {
     if (store.getLocalStorage()) this.menu = store.getLocalStorage();
     renderTemplate();
+    initEventListeners();
   };
 
-  const $ = (selector) => document.querySelector(selector);
-
   const updateMenuCount = () => {
-    const menuCount = $("#menu-list").querySelectorAll("li").length;
+    const menuCount = this.menu[this.currentCategory].length;
     $(".menu-count").innerText = `총 ${menuCount}개`;
   };
 
@@ -77,16 +70,15 @@ function App() {
     const editedMenuName = prompt("메뉴명을 수정하세요.", $menuName.innerText);
     this.menu[this.currentCategory][menuId].name = editedMenuName;
     store.setLocalStorage(this.menu);
-    $menuName.innerText = editedMenuName;
+    renderTemplate();
   };
 
   const removeMenuName = (e) => {
     if (confirm("정말 삭제하시겠습니까?")) {
       const menuId = e.target.closest("li").dataset.menuId;
-      e.target.closest("li").remove();
       this.menu[this.currentCategory].splice(menuId, 1);
       store.setLocalStorage(this.menu);
-      updateMenuCount();
+      renderTemplate();
     }
   };
 
@@ -98,35 +90,38 @@ function App() {
     renderTemplate();
   };
 
-  $("#menu-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-  });
+  const initEventListeners = () => {
+    $("#menu-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+    });
 
-  $("#menu-submit-button").addEventListener("click", addMenuName);
+    $("#menu-submit-button").addEventListener("click", addMenuName);
 
-  $("#menu-name").addEventListener("keypress", (e) => {
-    if (e.key !== "Enter") return;
-    addMenuName();
-  });
+    $("#menu-name").addEventListener("keypress", (e) => {
+      if (e.key !== "Enter") return;
+      addMenuName();
+    });
 
-  $("#menu-list").addEventListener("click", (e) => {
-    if (e.target.classList.contains("menu-edit-button"))
-      return updateMenuName(e);
-    if (e.target.classList.contains("menu-remove-button"))
-      return removeMenuName(e);
-    if (e.target.classList.contains("menu-sold-out-button"))
-      return soldOutMenu(e);
-  });
+    $("#menu-list").addEventListener("click", (e) => {
+      if (e.target.classList.contains("menu-edit-button"))
+        return updateMenuName(e);
+      if (e.target.classList.contains("menu-remove-button"))
+        return removeMenuName(e);
+      if (e.target.classList.contains("menu-sold-out-button"))
+        return soldOutMenu(e);
+    });
 
-  $("nav").addEventListener("click", (e) => {
-    const isCategoryButton = e.target.classList.contains("cafe-category-name");
-    if (isCategoryButton) {
-      const categoryName = e.target.dataset.categoryName;
-      this.currentCategory = categoryName;
-      $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
-      renderTemplate();
-    }
-  });
+    $("nav").addEventListener("click", (e) => {
+      const isCategoryButton =
+        e.target.classList.contains("cafe-category-name");
+      if (isCategoryButton) {
+        const categoryName = e.target.dataset.categoryName;
+        this.currentCategory = categoryName;
+        $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
+        renderTemplate();
+      }
+    });
+  };
 }
 
 const app = new App();
