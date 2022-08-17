@@ -1,44 +1,5 @@
 import { $ } from "./utils/dom.js";
-import store from "./store/index.js";
-
-const BASE_URL = "http://localhost:3000/api";
-
-const MenuApi = {
-  async getAllMenuByCategory(category) {
-    const response = await fetch(`${BASE_URL}/category/${category}/menu`, {
-      method: "GET",
-    });
-    return response.json();
-  },
-  async createMenu(category, name) {
-    await fetch(`${BASE_URL}/category/${category}/menu`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name }),
-    });
-  },
-  async updateMenu(category, menuId, name) {
-    await fetch(`${BASE_URL}/category/${category}/menu/${menuId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name }),
-    });
-  },
-  async toggleSoldOutMenu(category, menuId) {
-    await fetch(`${BASE_URL}/category/${category}/menu/${menuId}/soldout`, {
-      method: "PUT",
-    });
-  },
-  async removeMenu(category, menuId) {
-    await fetch(`${BASE_URL}/category/${category}/menu/${menuId}`, {
-      method: "DELETE",
-    });
-  },
-};
+import MenuApi from "./api/index.js";
 
 function App() {
   this.menu = {
@@ -64,7 +25,10 @@ function App() {
     $(".menu-count").innerText = `총 ${menuCount}개`;
   };
 
-  const renderTemplate = () => {
+  const renderTemplate = async () => {
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     const template = this.menu[this.currentCategory]
       .map((item) => {
         return `
@@ -102,9 +66,6 @@ function App() {
     if (menuName === "") return alert("값을 입력해주세요.");
 
     await MenuApi.createMenu(this.currentCategory, menuName);
-    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
     renderTemplate();
     $("#menu-name").value = "";
   };
@@ -114,9 +75,6 @@ function App() {
     const $menuName = e.target.closest("li").querySelector(".menu-name");
     const editedMenuName = prompt("메뉴명을 수정하세요.", $menuName.innerText);
     await MenuApi.updateMenu(this.currentCategory, menuId, editedMenuName);
-    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
     renderTemplate();
   };
 
@@ -124,9 +82,6 @@ function App() {
     if (confirm("정말 삭제하시겠습니까?")) {
       const menuId = e.target.closest("li").dataset.menuId;
       await MenuApi.removeMenu(this.currentCategory, menuId);
-      this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-        this.currentCategory
-      );
       renderTemplate();
     }
   };
@@ -134,10 +89,17 @@ function App() {
   const soldOutMenu = async (e) => {
     const menuId = e.target.closest("li").dataset.menuId;
     await MenuApi.toggleSoldOutMenu(this.currentCategory, menuId);
-    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
     renderTemplate();
+  };
+
+  const changeCategory = async (e) => {
+    const isCategoryButton = e.target.classList.contains("cafe-category-name");
+    if (isCategoryButton) {
+      const categoryName = e.target.dataset.categoryName;
+      this.currentCategory = categoryName;
+      $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
+      renderTemplate();
+    }
   };
 
   const initEventListeners = () => {
@@ -161,19 +123,7 @@ function App() {
         return soldOutMenu(e);
     });
 
-    $("nav").addEventListener("click", async (e) => {
-      const isCategoryButton =
-        e.target.classList.contains("cafe-category-name");
-      if (isCategoryButton) {
-        const categoryName = e.target.dataset.categoryName;
-        this.currentCategory = categoryName;
-        $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
-        this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-          this.currentCategory
-        );
-        renderTemplate();
-      }
-    });
+    $("nav").addEventListener("click", changeCategory);
   };
 }
 
